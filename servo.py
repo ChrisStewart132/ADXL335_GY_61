@@ -1,41 +1,9 @@
 from machine import Pin, PWM
 from time import sleep
-
-class LowPassFilter:
-    def __init__(self, alpha):
-        """
-        Initialize the low-pass filter.
-        
-        :param alpha: Smoothing factor (0 < alpha < 1). Smaller values = more smoothing.
-        """
-        self.alpha = alpha
-        self.filtered_value = None
-
-    def update(self, new_value):
-        """
-        Update the filter with a new value.
-        
-        :param new_value: The new raw input value.
-        :return: The filtered value.
-        """
-        if self.filtered_value is None:
-            self.filtered_value = new_value  # Initialize on first run
-        else:
-            # Apply the low-pass filter formula
-            self.filtered_value = self.alpha * new_value + (1 - self.alpha) * self.filtered_value
-        return self.filtered_value
+from filter import MedianFilter, EMAFilter, FilterPipeline
 
 class SG90Servo:
-    def __init__(self, pin, min_duty=2500, max_duty=7500, freq=50, alpha=0.5):
-        """
-        Initialize the SG90 servo motor.
-        
-        :param pin: The GPIO pin connected to the servo signal line.
-        :param min_duty: The minimum duty cycle for the servo (default is 2500 for 0 degrees).
-        :param max_duty: The maximum duty cycle for the servo (default is 7500 for 180 degrees).
-        :param freq: The frequency of the PWM signal (default is 50 Hz).
-        :param alpha: Smoothing factor for the low-pass filter (default is 0.2).
-        """
+    def __init__(self, pin, min_duty=2200, max_duty=7200, freq=50, alpha=0.5, buffer_size=6):
         self.pwm = PWM(Pin(pin))
         self.pwm.freq(freq)
         self.min_duty = min_duty
@@ -43,33 +11,19 @@ class SG90Servo:
         self.current_duty = min_duty
         self.pwm.duty_u16(self.current_duty)
         
-        # Initialize the low-pass filter
-        self.filter = LowPassFilter(alpha)
-        self.filtered_angle = None
+        # Initialize Filter Pipeline
+        self.filter_pipeline = FilterPipeline(buffer_size, [MedianFilter(), EMAFilter(alpha)])
 
     def set_angle(self, angle):
-        """
-        Set the servo to a specific angle.
+        angle = max(0, min(180, angle))  # Clamp angle between 0 and 180
+        self.filter_pipeline.add_value(angle)
+        filtered_angle = self.filter_pipeline.get_filtered_value()
         
-        :param angle: The desired angle (0 to 180 degrees).
-        """
-        if angle < 0:
-            angle = 0
-        elif angle > 180:
-            angle = 180
-        
-        # Apply low-pass filtering to the angle
-        self.filtered_angle = self.filter.update(angle)
-        
-        # Map the filtered angle to the duty cycle range
-        duty = int(self.min_duty + (self.max_duty - self.min_duty) * (self.filtered_angle / 180))
+        duty = int(self.min_duty + (self.max_duty - self.min_duty) * (filtered_angle / 180))
         self.current_duty = duty
         self.pwm.duty_u16(duty)
 
     def deinit(self):
-        """
-        Deinitialize the PWM signal and release the pin.
-        """
         self.pwm.deinit()
 
 
