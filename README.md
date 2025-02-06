@@ -7,6 +7,8 @@ gyro stabalization example using a GY_61 3 axis accelerometer
   Your browser does not support the video tag.
 </video>
 
+[roll_stabilization_480.mp4](./docs/assets/roll_stabilization_480.mp4)
+
 # Pipeline Overview
 ![pipeline](docs/assets/pipeline.jpg)
 
