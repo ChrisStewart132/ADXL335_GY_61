@@ -2,10 +2,7 @@
 
 gyro stabalization example using a GY_61 3 axis accelerometer
 
-<video width="320" height="240" controls>
-  <source src="https://github.com/user-attachments/assets/f7fba0ba-1d43-467a-9081-833114411239" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+[![Watch the video]()]([https://youtu.be/vt5fpE0bzSY](https://github.com/user-attachments/assets/f7fba0ba-1d43-467a-9081-833114411239))
 
 # Pipeline Overview
 ![pipeline](docs/assets/pipeline.jpg)
